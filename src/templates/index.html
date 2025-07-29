@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>simul8</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>simul8</h1>
+
+    <label for="track-select">Select Track:</label>
+    <select id="track-select" onchange="updateTrackImage()">
+        <option value="">--Choose a track--</option>
+        {% for track in tracks %}
+            <option value="{{ track.name }}">{{ track.name }}</option>
+        {% endfor %}
+    </select>
+
+    <img id="track-outline" class="track-image" src="" alt="Track Outline" style="display: none;">
+
+    <script>
+        function updateTrackImage() {
+            const select = document.getElementById("track-select");
+            const image = document.getElementById("track-outline");
+            const selectedTrack = select.value;
+
+            if (selectedTrack === "") {
+                // Fade out and hide if no selection
+                image.classList.remove("visible");
+                setTimeout(() => {
+                    image.style.display = "none";
+                    image.src = "";
+                }, 300);
+                return;
+            }
+
+            // Fade out current image
+            image.classList.remove("visible");
+
+            // After fade-out, update the image source and fade in
+            setTimeout(() => {
+                const filename = selectedTrack.replace(/\s+/g, "_") + ".png";
+                image.src = "/static/images/" + filename;
+                image.alt = selectedTrack + " Track Outline";
+                image.style.display = "block";
+
+                // When new image loads, fade in
+                image.onload = () => {
+                    void image.offsetWidth; // Force reflow
+                    image.classList.add("visible");
+                };
+            }, 300);
+        }
+    </script>
+</body>
+</html>
