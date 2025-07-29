@@ -9,24 +9,31 @@
     <h1>simul8</h1>
 
     <label for="track-select">Select Track:</label>
-    <select id="track-select" onchange="updateTrackImage()">
+    <select id="track-select" onchange="updateTrackImageAndData()">
         <option value="">--Choose a track--</option>
         {% for track in tracks %}
             <option value="{{ track.name }}">{{ track.name }}</option>
         {% endfor %}
     </select>
 
-    <img id="track-outline" class="track-image" src="" alt="Track Outline" style="display: none;">
+    <div class="track-container">
+        <img id="track-outline" class="track-image" src="" alt="Track Outline" style="display: none;">
+
+        <div id="track-info" class="track-info">
+            <!-- Filled dynamically with track features -->
+        </div>
+    </div>
 
     <script>
-        function updateTrackImage() {
+        function updateTrackImageAndData() {
             const select = document.getElementById("track-select");
             const image = document.getElementById("track-outline");
+            const infoBox = document.getElementById("track-info");
             const selectedTrack = select.value;
 
-            if (selectedTrack === "") {
-                // Fade out and hide if no selection
+            if (!selectedTrack) {
                 image.classList.remove("visible");
+                infoBox.innerHTML = "";
                 setTimeout(() => {
                     image.style.display = "none";
                     image.src = "";
@@ -34,22 +41,43 @@
                 return;
             }
 
-            // Fade out current image
+            // Fade out image and clear info
             image.classList.remove("visible");
+            infoBox.innerHTML = "";
 
-            // After fade-out, update the image source and fade in
+            // Load image
             setTimeout(() => {
                 const filename = selectedTrack.replace(/\s+/g, "_") + ".png";
                 image.src = "/static/images/" + filename;
                 image.alt = selectedTrack + " Track Outline";
                 image.style.display = "block";
 
-                // When new image loads, fade in
                 image.onload = () => {
-                    void image.offsetWidth; // Force reflow
+                    void image.offsetWidth;
                     image.classList.add("visible");
                 };
             }, 300);
+
+            // Fetch track info
+            fetch("/get_track_data", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ track: selectedTrack })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    infoBox.innerHTML = "<p>Error loading track data.</p>";
+                    return;
+                }
+
+                let html = "<h3>Track Info</h3><ul>";
+                for (const key in data) {
+                    html += `<li><strong>${key}:</strong> ${data[key]}</li>`;
+                }
+                html += "</ul>";
+                infoBox.innerHTML = html;
+            });
         }
     </script>
 </body>

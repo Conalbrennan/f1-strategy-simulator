@@ -27,7 +27,7 @@ class Tyre:
 
     def lap_time(self, lap_number: int, weather: Weather, track_length_km: float, corner_count: int) -> float:
         """
-        Calculate lap time for a specific lap considering progressive degradation and weather.
+        Calculate lap time for a specific lap considering progressive degradation, track layout, and weather.
         """
         # Weather factor affects degradation
         weather_factor = weather.calculate_weather_factor()
@@ -35,8 +35,11 @@ class Tyre:
         # Progressive degradation: small % increase per lap
         progressive_factor = 1 + 0.02 * (lap_number - 1)
 
+        # Corner count and track length impact (baseline: 16 corners, 4.3 km)
+        track_factor = (corner_count / 16) * (track_length_km / 4.3)
+
         # Total degradation for this lap
-        degradation_time = self.base_degradation_rate * weather_factor * progressive_factor
+        degradation_time = self.base_degradation_rate * weather_factor * progressive_factor * track_factor
 
         # Weather mismatch penalty (wrong tyre/weather)
         penalty = weather.calculate_penalty(self.name, track_length_km, corner_count)
@@ -90,10 +93,10 @@ tyres = {
 if __name__ == "__main__":
     # Dry race check
     weather_dry = Weather("dry", "moderate")
-    print("Lap 1 Soft:", soft.lap_time(1, weather_dry, 5.3, 16))
-    print("Lap 10 Soft:", soft.lap_time(10, weather_dry, 5.3, 16))
-    soft.check_lap_limit(25, weather_dry)  # should warn for soft
+    print("Lap 1 Soft:", soft.lap_time(1, weather_dry, 4.318, 10))  # Austria
+    print("Lap 10 Soft:", soft.lap_time(10, weather_dry, 4.318, 10))
+    soft.check_lap_limit(25, weather_dry)
 
     # Wet race should skip limits
     weather_wet = Weather("light_rain", "cold")
-    soft.check_lap_limit(50, weather_wet)  # should NOT warn
+    soft.check_lap_limit(50, weather_wet)

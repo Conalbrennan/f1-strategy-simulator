@@ -24,6 +24,13 @@ select {
     margin-bottom: 20px;
 }
 
+.track-container {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    margin-top: 20px;
+}
+
 .track-image {
     border: 2px solid black;
     padding: 5px;
@@ -31,8 +38,6 @@ select {
     max-height: 300px;
     width: 100%;
     object-fit: contain;
-    display: block;
-    margin-top: 20px;
 
     /* Fade-in effect */
     opacity: 0;
@@ -41,4 +46,23 @@ select {
 
 .track-image.visible {
     opacity: 1;
+}
+
+.track-info {
+    max-width: 400px;
+    font-size: 16px;
+    color: #333;
+}
+
+.track-info h3 {
+    margin-top: 0;
+}
+
+.track-info ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.track-info li {
+    margin-bottom: 8px;
 }
