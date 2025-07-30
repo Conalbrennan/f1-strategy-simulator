@@ -66,3 +66,57 @@ select {
 .track-info li {
     margin-bottom: 8px;
 }
+
+.info-strategy-container {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.strategy-ui {
+    font-size: 16px;
+    color: #333;
+    max-width: 300px;
+}
+
+.info-strategy-container {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.strategy-ui {
+    font-size: 16px;
+    color: #333;
+    max-width: 300px;
+}
+
+.stint-results-log {
+    margin-top: 20px;
+    font-size: 15px;
+}
+
+.stint-results-log p {
+    margin: 8px 0;
+}
+
+.stints-container {
+    margin-top: 20px;
+}
+
+.stint-block {
+    margin-bottom: 25px;
+    padding: 10px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.stint-block h4 {
+    margin-top: 0;
+}
+
+.stint-output {
+    margin-top: 10px;
+    font-size: 15px;
+}

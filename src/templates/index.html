@@ -19,23 +19,42 @@
     <div class="track-container">
         <img id="track-outline" class="track-image" src="" alt="Track Outline" style="display: none;">
 
-        <div id="track-info" class="track-info">
-            <!-- Filled dynamically with track features -->
+        <div class="info-strategy-container">
+            <div id="track-info" class="track-info"></div>
+
+            <div id="strategy-ui" class="strategy-ui" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;">Strategy Planner</h3>
+                    <button onclick="addStint()">Add Stint</button>
+                </div>
+
+                <p><strong>Laps Remaining:</strong> <span id="laps-remaining">-</span></p>
+
+                <div id="stints-container" class="stints-container">
+                    <!-- Stints go here -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Future UI controls for tyre and stints could go here -->
-
     <script>
+        let currentTrackLaps = 0;
+        let lapsRemaining = 0;
+        let stintCounter = 0;
+        let raceTotalSeconds = 0;
+
         function updateTrackImageAndData() {
-            const select = document.getElementById("track-select");
+            const track = document.getElementById("track-select").value;
             const image = document.getElementById("track-outline");
             const infoBox = document.getElementById("track-info");
-            const selectedTrack = select.value;
+            const strategyBox = document.getElementById("strategy-ui");
+            const lapsLabel = document.getElementById("laps-remaining");
+            const stintsContainer = document.getElementById("stints-container");
 
-            if (!selectedTrack) {
+            if (!track) {
                 image.classList.remove("visible");
                 infoBox.innerHTML = "";
+                strategyBox.style.display = "none";
                 setTimeout(() => {
                     image.style.display = "none";
                     image.src = "";
@@ -43,15 +62,17 @@
                 return;
             }
 
-            // Fade out image and clear info
             image.classList.remove("visible");
             infoBox.innerHTML = "";
+            stintsContainer.innerHTML = "";
+            strategyBox.style.display = "none";
+            stintCounter = 0;
+            raceTotalSeconds = 0;
 
-            // Load image
             setTimeout(() => {
-                const filename = selectedTrack.replace(/\s+/g, "_") + ".png";
+                const filename = track.replace(/\s+/g, "_") + ".png";
                 image.src = "/static/images/" + filename;
-                image.alt = selectedTrack + " Track Outline";
+                image.alt = track + " Track Outline";
                 image.style.display = "block";
 
                 image.onload = () => {
@@ -60,11 +81,10 @@
                 };
             }, 300);
 
-            // Fetch track info
             fetch("/get_track_data", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ track: selectedTrack })
+                body: JSON.stringify({ track: track })
             })
             .then(res => res.json())
             .then(data => {
@@ -73,12 +93,101 @@
                     return;
                 }
 
+                currentTrackLaps = data.Laps;
+                lapsRemaining = currentTrackLaps;
+                lapsLabel.textContent = lapsRemaining;
+
                 let html = "<h3>Track Info</h3><ul>";
                 for (const key in data) {
                     html += `<li><strong>${key}:</strong> ${data[key]}</li>`;
                 }
                 html += "</ul>";
                 infoBox.innerHTML = html;
+                strategyBox.style.display = "block";
+            });
+        }
+
+        function addStint() {
+            if (lapsRemaining <= 0) {
+                alert("Race is complete — no more laps remaining!");
+                return;
+            }
+
+            stintCounter++;
+            const container = document.getElementById("stints-container");
+
+            const div = document.createElement("div");
+            div.className = "stint-block";
+            div.innerHTML = `
+                <h4>Stint ${stintCounter}</h4>
+                <label>Tyre Compound:</label>
+                <select>
+                    <option value="">--Select Tyre--</option>
+                    <option value="soft">Soft</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="wet">Wet</option>
+                </select>
+                <label>Number of Laps:</label>
+                <input type="number" min="1">
+                <button onclick="calculateStint(this)">Calculate</button>
+                <div class="stint-output"></div>
+                <hr>
+            `;
+            container.appendChild(div);
+        }
+
+        function calculateStint(button) {
+            const track = document.getElementById("track-select").value;
+            const block = button.parentElement;
+            const tyre = block.querySelector("select").value;
+            const laps = parseInt(block.querySelector("input").value);
+            const output = block.querySelector(".stint-output");
+            const lapsLabel = document.getElementById("laps-remaining");
+
+            if (!track || !tyre || !laps || isNaN(laps)) {
+                output.innerHTML = "<p>Please fill in valid tyre and lap values.</p>";
+                return;
+            }
+
+            if (laps > lapsRemaining) {
+                output.innerHTML = `<p style="color: red;">⚠️ This stint exceeds remaining laps (${lapsRemaining} left).</p>`;
+                return;
+            }
+
+            fetch("/calculate_stint", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ track, tyre, laps })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    output.innerHTML = `<p>Error: ${data.error}</p>`;
+                    return;
+                }
+
+                lapsRemaining -= laps;
+                raceTotalSeconds += data.total_time_sec;
+                lapsLabel.textContent = lapsRemaining;
+
+                output.innerHTML = `
+                    <p><strong>Lap Times:</strong> ${data.lap_times.join(", ")}</p>
+                    <p><strong>Stint Time:</strong> ${data.total_time_str}</p>
+                `;
+
+                block.querySelector("select").disabled = true;
+                block.querySelector("input").disabled = true;
+                button.disabled = true;
+
+                if (lapsRemaining === 0) {
+                    const totalMin = Math.floor(raceTotalSeconds / 60);
+                    const totalSec = (raceTotalSeconds % 60).toFixed(2);
+                    const summary = document.createElement("p");
+                    summary.innerHTML = `<strong>✅ Race complete!</strong><br><strong>Total Race Time:</strong> ${totalMin}m ${totalSec}s`;
+                    document.getElementById("stints-container").appendChild(summary);
+                }
             });
         }
     </script>
