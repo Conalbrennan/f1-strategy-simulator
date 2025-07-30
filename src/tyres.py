@@ -1,86 +1,27 @@
-# tyres.py
-from weather import Weather
-
 class Tyre:
     """
-    Represents a tyre type with baseline performance and degradation properties.
+    Represents a tyre compound with degradation characteristics and lap limit.
     """
 
-    # Recommended max laps in DRY conditions
-    LAP_LIMITS_DRY = {
-        "soft": 20,
-        "medium": 30,
-        "hard": 40,
-        "intermediate": 15,  # if wrongly used in dry
-        "wet": 15            # if wrongly used in dry
-    }
-
-    def __init__(self, name: str, base_lap_time: float, base_degradation_rate: float):
+    def __init__(self, name: str, base_degradation_rate: float, lap_limit: int):
         """
-        name: 'soft', 'medium', 'hard', 'intermediate', or 'wet'
-        base_lap_time: Optimum lap time on this tyre (seconds)
-        base_degradation_rate: baseline performance drop (seconds per lap)
+        name: Tyre compound name ('soft', 'medium', 'hard', etc.)
+        base_degradation_rate: Degradation per lap (in seconds)
+        lap_limit: Recommended maximum laps before performance drops sharply
         """
         self.name = name
-        self.base_lap_time = base_lap_time
         self.base_degradation_rate = base_degradation_rate
-
-    def lap_time(self, lap_number: int, weather: Weather, track_length_km: float, corner_count: int) -> float:
-        """
-        Calculate lap time for a specific lap considering progressive degradation, track layout, and weather.
-        """
-        # Weather factor affects degradation
-        weather_factor = weather.calculate_weather_factor()
-
-        # Progressive degradation: small % increase per lap
-        progressive_factor = 1 + 0.02 * (lap_number - 1)
-
-        # Corner count and track length impact (baseline: 16 corners, 4.3 km)
-        track_factor = (corner_count / 16) * (track_length_km / 4.3)
-
-        # Total degradation for this lap
-        degradation_time = self.base_degradation_rate * weather_factor * progressive_factor * track_factor
-
-        # Weather mismatch penalty (wrong tyre/weather)
-        penalty = weather.calculate_penalty(self.name, track_length_km, corner_count)
-
-        return self.base_lap_time + degradation_time + penalty
-
-    def stint_time(self, total_laps: int, weather: Weather, track_length_km: float, corner_count: int) -> float:
-        """
-        Calculate total time for a stint (sum of progressive lap times).
-        """
-        total_time = 0.0
-        for lap in range(1, total_laps + 1):
-            total_time += self.lap_time(lap, weather, track_length_km, corner_count)
-        return total_time
-
-    def check_lap_limit(self, requested_laps: int, weather: Weather) -> bool:
-        """
-        Warns if the requested laps exceed recommended limit.
-        Returns True if risky.
-        """
-        # In wet races (light/heavy rain), NO enforced lap limits
-        if weather.precipitation in ["light_rain", "heavy_rain"]:
-            return False  # always safe in wet conditions
-
-        # Dry race → apply limits
-        base_limit = self.LAP_LIMITS_DRY.get(self.name, 20)
-
-        if requested_laps > base_limit:
-            print(f"⚠️ WARNING: Running {self.name.capitalize()} for {requested_laps} laps exceeds "
-                  f"recommended {base_limit}-lap limit! High puncture risk.")
-            return True
-        return False
+        self.lap_limit = lap_limit
 
 
 # Create tyre instances (baseline data - approximate)
-soft = Tyre("soft", base_lap_time=90.0, base_degradation_rate=0.25)
-medium = Tyre("medium", base_lap_time=92.0, base_degradation_rate=0.18)
-hard = Tyre("hard", base_lap_time=94.0, base_degradation_rate=0.12)
-intermediate = Tyre("intermediate", base_lap_time=96.0, base_degradation_rate=0.20)
-wet = Tyre("wet", base_lap_time=100.0, base_degradation_rate=0.22)
+soft = Tyre("soft", base_degradation_rate=0.25, lap_limit=20)
+medium = Tyre("medium", base_degradation_rate=0.18, lap_limit=30)
+hard = Tyre("hard", base_degradation_rate=0.12, lap_limit=40)
+intermediate = Tyre("intermediate", base_degradation_rate=0.10, lap_limit=40)  # wet-only
+wet = Tyre("wet", base_degradation_rate=0.08, lap_limit=40)                    # wet-only
 
+# Tyre lookup dictionary
 tyres = {
     "soft": soft,
     "medium": medium,
@@ -88,15 +29,3 @@ tyres = {
     "intermediate": intermediate,
     "wet": wet
 }
-
-# Quick test
-if __name__ == "__main__":
-    # Dry race check
-    weather_dry = Weather("dry", "moderate")
-    print("Lap 1 Soft:", soft.lap_time(1, weather_dry, 4.318, 10))  # Austria
-    print("Lap 10 Soft:", soft.lap_time(10, weather_dry, 4.318, 10))
-    soft.check_lap_limit(25, weather_dry)
-
-    # Wet race should skip limits
-    weather_wet = Weather("light_rain", "cold")
-    soft.check_lap_limit(50, weather_wet)
