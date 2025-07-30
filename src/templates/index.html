@@ -30,8 +30,19 @@
 
                 <p><strong>Laps Remaining:</strong> <span id="laps-remaining">-</span></p>
 
-                <div id="stints-container" class="stints-container">
-                    <!-- Stints go here -->
+                <div id="stints-container" class="stints-container"></div>
+            </div>
+
+            <div id="optimal-strategy" class="strategy-ui" style="display: none;">
+                <div class="stint-block">
+                    <h3>Optimal Strategy</h3>
+                    <label for="weather">Weather:</label>
+                    <select id="weather">
+                        <option value="dry">Dry</option>
+                        <option value="wet">Wet</option>
+                    </select>
+                    <button onclick="getOptimalStrategy()">Optimise</button>
+                    <div id="optimise-result" class="stint-output" style="margin-top: 10px;"></div>
                 </div>
             </div>
         </div>
@@ -42,12 +53,14 @@
         let lapsRemaining = 0;
         let stintCounter = 0;
         let raceTotalSeconds = 0;
+        let pitStopLoss = 0;
 
         function updateTrackImageAndData() {
             const track = document.getElementById("track-select").value;
             const image = document.getElementById("track-outline");
             const infoBox = document.getElementById("track-info");
             const strategyBox = document.getElementById("strategy-ui");
+            const optimiserBox = document.getElementById("optimal-strategy");
             const lapsLabel = document.getElementById("laps-remaining");
             const stintsContainer = document.getElementById("stints-container");
 
@@ -55,6 +68,7 @@
                 image.classList.remove("visible");
                 infoBox.innerHTML = "";
                 strategyBox.style.display = "none";
+                optimiserBox.style.display = "none";
                 setTimeout(() => {
                     image.style.display = "none";
                     image.src = "";
@@ -66,6 +80,7 @@
             infoBox.innerHTML = "";
             stintsContainer.innerHTML = "";
             strategyBox.style.display = "none";
+            optimiserBox.style.display = "none";
             stintCounter = 0;
             raceTotalSeconds = 0;
 
@@ -95,6 +110,7 @@
 
                 currentTrackLaps = data.Laps;
                 lapsRemaining = currentTrackLaps;
+                pitStopLoss = data["Pit Stop Loss (s)"];
                 lapsLabel.textContent = lapsRemaining;
 
                 let html = "<h3>Track Info</h3><ul>";
@@ -104,6 +120,7 @@
                 html += "</ul>";
                 infoBox.innerHTML = html;
                 strategyBox.style.display = "block";
+                optimiserBox.style.display = "block";
             });
         }
 
@@ -173,7 +190,7 @@
                 lapsLabel.textContent = lapsRemaining;
 
                 output.innerHTML = `
-                    <p><strong>Lap Times:</strong> ${data.lap_times.join(", ")}</p>
+                    <p><strong>Lap Times:</strong> ${data.lap_times.map(t => t.toFixed(2)).join(", ")}</p>
                     <p><strong>Stint Time:</strong> ${data.total_time_str}</p>
                 `;
 
@@ -182,12 +199,53 @@
                 button.disabled = true;
 
                 if (lapsRemaining === 0) {
-                    const totalMin = Math.floor(raceTotalSeconds / 60);
-                    const totalSec = (raceTotalSeconds % 60).toFixed(2);
+                    const pitTime = (stintCounter - 1) * pitStopLoss;
+                    const totalWithPit = raceTotalSeconds + pitTime;
+                    const totalMin = Math.floor(totalWithPit / 60);
+                    const totalSec = (totalWithPit % 60).toFixed(2);
+
                     const summary = document.createElement("p");
-                    summary.innerHTML = `<strong>✅ Race complete!</strong><br><strong>Total Race Time:</strong> ${totalMin}m ${totalSec}s`;
+                    summary.innerHTML = `
+                        <strong>✅ Race complete!</strong><br>
+                        Pit Stop Time: ${pitTime.toFixed(2)}s<br>
+                        <strong>Total Race Time:</strong> ${totalMin}m ${totalSec}s
+                    `;
                     document.getElementById("stints-container").appendChild(summary);
                 }
+            });
+        }
+
+        function getOptimalStrategy() {
+            const track = document.getElementById("track-select").value;
+            const weather = document.getElementById("weather").value;
+            const resultBox = document.getElementById("optimise-result");
+
+            if (!track || !weather) {
+                resultBox.innerHTML = "<p>Please select both track and weather.</p>";
+                return;
+            }
+
+            resultBox.innerHTML = "Calculating...";
+
+            fetch("/get_optimal_strategy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ track, weather })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    resultBox.innerHTML = `<p>Error: ${data.error}</p>`;
+                    return;
+                }
+
+                let output = "";
+                data.strategy.forEach((stint, i) => {
+                    output += `<li>Stint ${i + 1}: ${stint.compound} (${stint.laps} laps) → ${stint.time_str}</li>`;
+                });
+                output += `<br><strong>Pit Stop Time:</strong> ${data.pit_loss}s<br>`;
+                output += `<strong>Total Race Time:</strong> ${data.total_time}`;
+                resultBox.innerHTML = `<ul>${output}</ul>`;
             });
         }
     </script>

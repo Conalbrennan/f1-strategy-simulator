@@ -48,13 +48,22 @@ select {
     opacity: 1;
 }
 
-.track-info {
-    max-width: 400px;
-    font-size: 16px;
-    color: #333;
+.right-side {
+    display: flex;
+    gap: 30px;
+    flex-grow: 1;
 }
 
-.track-info h3 {
+.track-info, .stint-section, .optimal-section {
+    max-width: 300px;
+    font-size: 16px;
+    color: #333;
+    flex: 1;
+}
+
+.track-info h3,
+.stint-section h3,
+.optimal-section h3 {
     margin-top: 0;
 }
 
@@ -67,6 +76,7 @@ select {
     margin-bottom: 8px;
 }
 
+/* Legacy container for old layout (retained for future use if needed) */
 .info-strategy-container {
     display: flex;
     gap: 40px;
@@ -79,18 +89,7 @@ select {
     max-width: 300px;
 }
 
-.info-strategy-container {
-    display: flex;
-    gap: 40px;
-    align-items: flex-start;
-}
-
-.strategy-ui {
-    font-size: 16px;
-    color: #333;
-    max-width: 300px;
-}
-
+/* Stint results and layout formatting */
 .stint-results-log {
     margin-top: 20px;
     font-size: 15px;
@@ -117,6 +116,54 @@ select {
 }
 
 .stint-output {
+    margin-top: 10px;
+    font-size: 15px;
+}
+
+/* Match spacing for JS-generated stint row */
+.stint-row {
+    margin-bottom: 15px;
+}
+
+.stint-row select,
+.stint-row input {
+    margin-right: 10px;
+    font-size: 14px;
+    padding: 4px;
+}
+
+.stint-row button {
+    margin-top: 5px;
+}
+
+#stint-list > div,
+#optimal-output {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+/* NEW: Style for Optimal Strategy block to match stint style */
+#optimal-strategy .stint-block {
+    margin-top: 20px;
+    padding: 12px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    background-color: #f3f3f3;
+}
+
+#optimal-strategy select {
+    font-size: 14px;
+    padding: 4px;
+    margin-right: 8px;
+}
+
+#optimal-strategy button {
+    font-size: 14px;
+    padding: 5px 10px;
+    margin-top: 5px;
+}
+
+#optimise-result {
     margin-top: 10px;
     font-size: 15px;
 }

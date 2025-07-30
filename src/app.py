@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from tracks import tracks
-from strategy import get_lap_times, overall_stint_time
+from strategy import get_lap_times, overall_stint_time, find_optimal_strategy
 
 simul8 = Flask(__name__)
 
@@ -33,23 +33,32 @@ def get_track_data():
 @simul8.route("/calculate_stint", methods=["POST"])
 def calculate_stint():
     data = request.json
-    track_name = data.get("track")
-    tyre = data.get("tyre")
-    stint_laps = data.get("laps")
+    track = data["track"]
+    tyre = data["tyre"]
+    laps = int(data["laps"])
+    lap_times = get_lap_times(track, tyre, laps)
+    total = overall_stint_time(lap_times)
+    return jsonify({
+        "lap_times": lap_times,
+        "total_time_sec": total,
+        "total_time_str": f"{int(total // 60)}m {total % 60:.2f}s"
+    })
+
+@simul8.route("/get_optimal_strategy", methods=["POST"])
+def get_optimal_strategy():
+    data = request.json
+    track = data["track"]
+    weather = data["weather"]
 
     try:
-        lap_times = get_lap_times(track_name, tyre, stint_laps)
-        total_time = overall_stint_time(lap_times)
-        mins = int(total_time // 60)
-        secs = total_time % 60
-
+        strategy, total_time, pit_loss = find_optimal_strategy(track, weather)
         return jsonify({
-            "lap_times": [round(t, 2) for t in lap_times],
-            "total_time_sec": total_time,
-            "total_time_str": f"{mins}m {secs:.2f}s"
+            "strategy": strategy,
+            "total_time": total_time,
+            "pit_loss": pit_loss
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     simul8.run(debug=True)
