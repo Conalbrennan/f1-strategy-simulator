@@ -25,7 +25,8 @@ def get_track_data():
         "Corners (Right)": track.corners_right,
         "Direction": track.direction,
         "Pit Stop Loss (s)": track.pit_stop_loss,
-        "Tyre Wear (1–5)": track.tyre_wear
+        "Tyre Wear (1–5)": track.tyre_wear,
+        "Fun Facts": track.fun_facts
     }
 
     return jsonify(track_data)

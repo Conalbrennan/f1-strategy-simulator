@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>simul8</title>
+    <title>Strategy Simulator CB</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>simul8</h1>
+    <div class="title-bar">
+        <h1>Strategy Simulator CB</h1>
+    </div>
 
     <label for="track-select">Select Track:</label>
     <select id="track-select" onchange="updateTrackImageAndData()">
@@ -17,7 +19,10 @@
     </select>
 
     <div class="track-container">
-        <img id="track-outline" class="track-image" src="" alt="Track Outline" style="display: none;">
+        <div>
+            <img id="track-outline" class="track-image" src="" alt="Track Outline" style="display: none;">
+            <div id="track-facts" class="track-facts" style="margin-top: 20px;"></div>
+        </div>
 
         <div class="info-strategy-container">
             <div id="track-info" class="track-info"></div>
@@ -59,6 +64,7 @@
             const track = document.getElementById("track-select").value;
             const image = document.getElementById("track-outline");
             const infoBox = document.getElementById("track-info");
+            const factsBox = document.getElementById("track-facts");
             const strategyBox = document.getElementById("strategy-ui");
             const optimiserBox = document.getElementById("optimal-strategy");
             const lapsLabel = document.getElementById("laps-remaining");
@@ -66,19 +72,19 @@
 
             if (!track) {
                 image.classList.remove("visible");
+                image.style.display = "none";
+                image.src = "";
                 infoBox.innerHTML = "";
+                factsBox.innerHTML = "";
                 strategyBox.style.display = "none";
                 optimiserBox.style.display = "none";
-                setTimeout(() => {
-                    image.style.display = "none";
-                    image.src = "";
-                }, 300);
                 return;
             }
 
             image.classList.remove("visible");
-            infoBox.innerHTML = "";
             stintsContainer.innerHTML = "";
+            infoBox.innerHTML = "";
+            factsBox.innerHTML = "";
             strategyBox.style.display = "none";
             optimiserBox.style.display = "none";
             stintCounter = 0;
@@ -113,12 +119,24 @@
                 pitStopLoss = data["Pit Stop Loss (s)"];
                 lapsLabel.textContent = lapsRemaining;
 
-                let html = "<h3>Track Info</h3><ul>";
+                let infoHtml = "<h3>Track Info</h3><ul>";
                 for (const key in data) {
-                    html += `<li><strong>${key}:</strong> ${data[key]}</li>`;
+                    if (key !== "Fun Facts") {
+                        infoHtml += `<li><strong>${key}:</strong> ${data[key]}</li>`;
+                    }
                 }
-                html += "</ul>";
-                infoBox.innerHTML = html;
+                infoHtml += "</ul>";
+                infoBox.innerHTML = infoHtml;
+
+                if (data["Fun Facts"] && data["Fun Facts"].length > 0) {
+                    let factsHtml = "<h3>Key Facts</h3><ul>";
+                    data["Fun Facts"].forEach(fact => {
+                        factsHtml += `<li>${fact}</li>`;
+                    });
+                    factsHtml += "</ul>";
+                    factsBox.innerHTML = factsHtml;
+                }
+
                 strategyBox.style.display = "block";
                 optimiserBox.style.display = "block";
             });
@@ -197,6 +215,17 @@
                 block.querySelector("select").disabled = true;
                 block.querySelector("input").disabled = true;
                 button.disabled = true;
+
+                const colorClassMap = {
+                    soft: "red",
+                    medium: "yellow",
+                    hard: "white",
+                    intermediate: "green",
+                    wet: "blue"
+                };
+                if (colorClassMap[tyre]) {
+                    block.classList.add(colorClassMap[tyre]);
+                }
 
                 if (lapsRemaining === 0) {
                     const pitTime = (stintCounter - 1) * pitStopLoss;
