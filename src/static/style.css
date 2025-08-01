@@ -13,7 +13,7 @@
 }
 
 body {
-    background-color: #f2f2f2; /* Light neutral grey */
+    background-color: #f2f2f2; 
     font-family: 'F1Regular', Arial, sans-serif;
     margin: 30px;
 }
@@ -60,7 +60,6 @@ select {
     object-fit: contain;
     background-color: white;
 
-    /* Fade-in effect */
     opacity: 0;
     transition: opacity 0.5s ease-in;
 }
@@ -129,7 +128,7 @@ select {
     padding: 10px;
     border: 2px solid #aaa;
     border-radius: 8px;
-    background-color: white; /* Ensure white box even on grey body */
+    background-color: white; 
     transition: border 0.5s ease;
 }
 
@@ -142,7 +141,7 @@ select {
     font-size: 15px;
 }
 
-/* Match spacing for JS-generated stint row */
+/* Match spacing */
 .stint-row {
     margin-bottom: 15px;
 }
@@ -170,7 +169,7 @@ select {
     padding: 12px;
     border: 1px solid #aaa;
     border-radius: 8px;
-    background-color: white; /* Force white */
+    background-color: white; 
 }
 
 #optimal-strategy select {
@@ -190,7 +189,7 @@ select {
     font-size: 15px;
 }
 
-/* Dynamic compound borders */
+/* Dynamic borders */
 .stint-block.red { border-color: red; }
 .stint-block.yellow { border-color: yellow; }
 .stint-block.white { border-color: white; }

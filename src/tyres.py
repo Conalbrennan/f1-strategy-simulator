@@ -14,7 +14,7 @@ class Tyre:
         self.lap_limit = lap_limit
 
 
-# Create tyre instances (baseline data - approximate)
+# Baseline data - approximate
 soft = Tyre("soft", base_degradation_rate=0.25, lap_limit=20)
 medium = Tyre("medium", base_degradation_rate=0.18, lap_limit=30)
 hard = Tyre("hard", base_degradation_rate=0.12, lap_limit=40)
